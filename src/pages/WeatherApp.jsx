@@ -1,107 +1,165 @@
 import React, { useEffect, useState } from "react";
-import { Formik, Form, Field, ErrorMessage } from "formik";
+import { Formik, Form, Field } from "formik";
 import * as Yup from "yup";
 import { CiSearch } from "react-icons/ci";
-import { IoLocationOutline } from "react-icons/io5";
+import { IoLocationOutline, IoWaterOutline } from "react-icons/io5";
+import { FiWind } from "react-icons/fi";
+import { WiBarometer } from "react-icons/wi";
+
+// Helper to format date
+const formatDate = (date) => {
+  const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  return date.toLocaleDateString("en-US", options);
+};
 
 function WeatherApp() {
   const [cityName, setCityName] = useState("Lahore");
   const [weatherData, setWeatherData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const validationSchema = Yup.object().shape({
-    city: Yup.string(),
+    city: Yup.string().required("City name is required"),
   });
 
   useEffect(() => {
-    if (!cityName) return;
+    const fetchWeather = async () => {
+      if (!cityName) return;
+      
+      setLoading(true);
+      setError(null);
+      
+      const apiKey = "2d66e4c984d0701b5d0c2d497631d755"; 
+      
+      try {
+        const response = await fetch(
+          `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric`
+        );
+        
+        if (!response.ok) {
+          throw new Error("City not found");
+        }
 
-    let apiKey = "2d66e4c984d0701b5d0c2d497631d755";
-    fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&appid=${apiKey}&units=metric`
-    )
-      .then((response) => response.json())
-      .then((weaData) => {
-        setWeatherData(weaData);
-       
-      })
-      .catch((error) => console.error("Something is Wrong", error));
+        const data = await response.json();
+        setWeatherData(data);
+      } catch (err) {
+        setError(err.message);
+        setWeatherData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
   }, [cityName]);
- console.log("weatherData",weatherData);
-  return (
-    <div className="w-full h-[100vh] relative bg-gradient-to-b from-[#8A2BE2] to-[#6A5ACD]">
-      {/* Search Bar */}
-      <div
-        className="w-[50%] h-[30px] bg-white absolute top-2 start-[50%] flex h-[50px] items-center"
-        style={{ transform: "translateX(-50%)" }}
-      >
-        <Formik
-          initialValues={{ city: "Lahore" }}
-          validationSchema={validationSchema}
-          validateOnBlur={false}
-          onSubmit={(values) => {
-            setCityName(values.city);
-          }}
-        >
-          <Form className="w-full">
-            <div className="flex">
-              <Field
-                type="text"
-                name="city"
-                placeholder="Enter City Name"
-                className="p-[10px]  text-[16px] w-[90%] bg-transparent outline-0 "
-              />
-              <div className="w-[10%] bg-black flex items-center justify-center">
-                <button
-                  type="submit"
-                  className="text-white text-[30px]  py-[10px] font-bold"
-                >
-                  <CiSearch />
-                </button>
-              </div>
-            </div>
-            <ErrorMessage
-              name="city"
-              component="div"
-              className="text-red-500 text-sm mt-1"
-            />
-          </Form>
-        </Formik>
-      </div>
 
-      {/* Weather Card */}
-      {weatherData && weatherData.weather ? (
-        <div className="flex justify-center items-center h-[100vh]">
-          <div className="w-[50%] py-[30px] bg-gradient-to-b from-[#6C0BA9] mt-[5%] to-[#5B2C98] rounded-2xl p-6 shadow-lg text-center text-white flex flex-col gap-2">
-            <div className="flex items-center justify-center gap-2">
-              <IoLocationOutline className="text-[28px] font-semibold" />
-              <h2 className="text-[28px]">{weatherData.name}</h2>
-            </div>
-            <div className="text-center flex flex-col gap-6">
-              <img
-                src={`http://openweathermap.org/img/wn/${weatherData.weather[0].  icon}@2x.png`}
-                alt="weather icon" height={120} width={120} className="mx-auto"
-              />
-              <h3 className="text-[20px] capitalize">
-                {weatherData.weather?.[0]?.description}
-              </h3>
-              <h1 className="text-[64px]">{weatherData.main.temp}°C</h1>
-              <h3 className="text-[18px]">
-                Feels Like {Math.round(weatherData.main.feels_like)}°C
-              </h3>
-            </div>
-            <div className="rounded-[5px] p-6 bg-[#6C0BA9] rounded-2xl shadow-lg capitalize">
-              <h2>Wind speed: {weatherData.wind?.speed} m/s</h2>
-            </div>
-          </div>
+  return (
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] flex items-center justify-center p-4 font-sans text-white">
+      
+      {/* Glassmorphism Card */}
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 shadow-2xl overflow-hidden relative">
+        
+        {/* Decorative Circles behind the glass */}
+        <div className="absolute top-[-50px] left-[-50px] w-32 h-32 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div className="absolute top-[-50px] right-[-50px] w-32 h-32 bg-yellow-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div className="absolute bottom-[-50px] left-[20%] w-32 h-32 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+
+        {/* Search Bar */}
+        <div className="relative z-10 mb-8">
+          <Formik
+            initialValues={{ city: "" }}
+            validationSchema={validationSchema}
+            onSubmit={(values, { resetForm }) => {
+              setCityName(values.city);
+              resetForm();
+            }}
+          >
+            {({ errors, touched }) => (
+              <Form className="w-full">
+                <div className="relative flex items-center bg-white/20 rounded-full px-4 py-2 border border-white/30 shadow-sm transition-all focus-within:bg-white/30 focus-within:border-white/50">
+                  <IoLocationOutline className="text-white text-xl mr-2" />
+                  <Field
+                    type="text"
+                    name="city"
+                    placeholder="Search city..."
+                    className="bg-transparent border-none outline-none text-white placeholder-gray-300 w-full font-medium"
+                    autoComplete="off"
+                  />
+                  <button type="submit" className="text-white hover:text-yellow-300 transition-colors">
+                    <CiSearch size={24} />
+                  </button>
+                </div>
+                {errors.city && touched.city && (
+                  <div className="text-red-300 text-xs ml-4 mt-1">{errors.city}</div>
+                )}
+              </Form>
+            )}
+          </Formik>
         </div>
-      ) : (
-        <p
-          className="p-6 absolute top-[50%] start-[50%] text-xl w-[50%] text-white text-center bg-gradient-to-b from-[#6C0BA9] to-[#5B2C98]"
-          style={{ transform: "translate(-50%, -50%)" }}
-        >
-          Loading weather data...
-        </p>
-      )}
+
+        {/* Content Area */}
+        <div className="relative z-10 min-h-[300px] flex flex-col justify-center">
+          
+          {loading ? (
+            <div className="text-center animate-pulse">
+              <p className="text-xl font-light">Checking the sky...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center">
+              <p className="text-red-300 text-lg mb-2">Oops!</p>
+              <p>{error}</p>
+            </div>
+          ) : weatherData ? (
+            <>
+              {/* Main Weather Info */}
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold tracking-wide">{weatherData.name}, {weatherData.sys.country}</h2>
+                <p className="text-sm text-gray-300 mt-1">{formatDate(new Date())}</p>
+                
+                <div className="flex flex-col items-center justify-center mt-6">
+                  <img
+                    src={`http://openweathermap.org/img/wn/${weatherData.weather[0].icon}@4x.png`}
+                    alt="weather icon"
+                    className="w-32 h-32 drop-shadow-lg"
+                  />
+                  <h1 className="text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
+                    {Math.round(weatherData.main.temp)}°
+                  </h1>
+                  <p className="text-xl font-medium capitalize mt-2 text-gray-200">
+                    {weatherData.weather[0].description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Weather Details Grid */}
+              <div className="grid grid-cols-3 gap-4 border-t border-white/20 pt-6">
+                
+                {/* Wind */}
+                <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                  <FiWind className="text-2xl mb-1 text-blue-300" />
+                  <span className="text-sm font-light text-gray-300">Wind</span>
+                  <span className="font-semibold">{weatherData.wind.speed} m/s</span>
+                </div>
+
+                {/* Humidity */}
+                <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                  <IoWaterOutline className="text-2xl mb-1 text-blue-300" />
+                  <span className="text-sm font-light text-gray-300">Humidity</span>
+                  <span className="font-semibold">{weatherData.main.humidity}%</span>
+                </div>
+
+                {/* Pressure */}
+                <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/5 hover:bg-white/10 transition">
+                  <WiBarometer className="text-2xl mb-1 text-blue-300" />
+                  <span className="text-sm font-light text-gray-300">Pressure</span>
+                  <span className="font-semibold">{weatherData.main.pressure} hPa</span>
+                </div>
+
+              </div>
+            </>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
